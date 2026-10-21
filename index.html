@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Interactive Two-Way Finite Automata (2WFA / 2DFA) simulator. Visualize bidirectional read-head tape movement, dynamic state diagrams, transition matrices, and loop detection.">
+  <meta name="keywords"
+    content="Two-Way Finite Automata, 2WFA, 2DFA, Automata Theory, Formal Languages, FLA, Turing Machine, Bidirectional Tape">
+  <title>Two-Way Finite Automata | Interactive Simulation & Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⇄</text></svg>">
+</head>
+
+<body>
+  <!-- Ambient Grid & Glow Overlay -->
+  <div class="bg-grid-overlay"></div>
+
+  <!-- SITE NAVIGATION -->
+  <nav class="site-nav">
+    <a href="#" class="brand-container">
+      <div class="brand-icon">⇄</div>
+      <div class="brand-name">2WFA.io</div>
+    </a>
+
+    <div class="nav-links">
+      <a href="#searchControlDeck" class="nav-link"><span></span> Simulator</a>
+      <a href="#tapeVisualizerCard" class="nav-link"><span></span> Tape Head</a>
+      <a href="#diagramAndTableGrid" class="nav-link"><span></span> Diagram & Matrix</a>
+      <a href="#theorySection" class="nav-link"><span></span> Theory & Proofs</a>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-icon-nav" id="btnToggleSound" title="Toggle Sound FX">🔊</button>
+      <a href="#searchControlDeck" class="btn-primary-nav">
+        <span>Launch Engine</span>
+        <span>→</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- =====================================================================
+       HERO & SCROLL-ZOOM NARRATIVE SECTION
+       "as soon as you open the website, the heading should be two way finite automata.
+        then as we scroll the text zooms in and then next in the search bar you enter the string"
+       ===================================================================== -->
+  <section class="hero-scroll-wrapper" id="heroScrollWrapper">
+    <div class="hero-sticky-stage">
+      <div class="hero-zoom-container" id="heroZoomContainer">
+        <h1 class="hero-title">
+          Two-Way <br><span class="highlight">Finite Automata</span>
+        </h1>
+        <p class="hero-subtitle">
+          Explore the mechanics of bidirectional tape traversal where the read head scans both left and right across
+          input symbols.
+        </p>
+      </div>
+
+      <div class="hero-meta-strip">
+        <div class="hero-meta-item">
+          <i>✦</i> <span>Bidirectional Head Dynamics</span>
+        </div>
+        <div class="hero-meta-item">
+          <i>✦</i> <span>Dynamic State Diagrams</span>
+        </div>
+        <div class="hero-meta-item">
+          <i>✦</i> <span>Loop & Cycle Guard</span>
+        </div>
+      </div>
+
+      <div class="scroll-prompt-indicator" id="scrollPromptBtn">
+        <div class="scroll-mouse-icon">
+          <div class="scroll-mouse-wheel"></div>
+        </div>
+        <span>SCROLL TO ENTER STRING</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       MAIN INTERACTIVE APPLICATION & WORKSPACE
+       ===================================================================== -->
+  <main class="main-app-container">
+
+    <!-- SEARCH BAR & PRESET CONFIGURATION DECK -->
+    <section class="search-control-deck" id="searchControlDeck">
+      <div class="search-bar-top-row">
+        <div class="search-bar-heading-group">
+          <span class="search-badge">✦ STEP 1: INPUT STRING</span>
+          <h2 class="search-bar-title">Enter Tape String for Two-Way Automaton</h2>
+        </div>
+
+        <div class="preset-dropdown-group">
+          <label for="presetSelect" class="preset-dropdown-label">Select 2WFA Machine:</label>
+          <select id="presetSelect" class="select-preset-custom">
+            <option value="pattern101">Preset 1: Substring '101' with Backtracking</option>
+            <option value="sameEnds">Preset 2: First & Last Symbol Match (w = x u x)</option>
+            <option value="palindromeSweep">Preset 3: Palindromic Boundary Sweep</option>
+            <option value="pingPong">Preset 4: Two-Way Ping-Pong (Even 1s & Odd 0s)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Search Input Bar -->
+      <div class="search-input-wrapper">
+        <span class="search-icon-symbol">⌕</span>
+        <input type="text" id="tapeInput" class="input-tape-string"
+          placeholder="Enter binary tape string (e.g. 101001)..." autocomplete="off" spellcheck="false">
+        <div class="search-action-btns">
+          <button id="btnClearTape" class="btn-clear-tape" title="Clear input">Clear</button>
+          <button id="btnLoadTape" class="btn-load-tape">
+            <span>Load Tape</span>
+            <span>↵</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sample Chips -->
+      <div class="sample-chips-row">
+        <span class="sample-chip-label">Quick Test Strings:</span>
+        <div id="sampleChipsContainer" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+      </div>
+
+      <!-- Preset Description Callout -->
+      <div class="preset-details-banner" id="presetDescBox">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         INPUT TAPE & BIDIRECTIONAL READ HEAD
+         (Exact replica of Screenshot 5 with luxury polish)
+         =================================================================== -->
+    <section class="tape-visualizer-card" id="tapeVisualizerCard">
+      <!-- Top Header & Status Pills (Matching Screenshot 5) -->
+      <div class="tape-card-header">
+        <div class="tape-card-title-group">
+          <div class="tape-card-indicator-dot"></div>
+          <h3 class="tape-card-title">Input Tape & Bidirectional Read Head</h3>
+        </div>
+
+        <div class="tape-metrics-pills-row">
+          <div class="metric-pill">
+            <span>Current State:</span>
+            <span class="pill-val" id="pillCurrentState">q0</span>
+          </div>
+          <div class="metric-pill">
+            <span>Configuration:</span>
+            <span class="pill-val" id="pillConfiguration">(q0, 0)</span>
+          </div>
+          <div class="metric-pill">
+            <span>Scanned Symbol:</span>
+            <span class="pill-val" id="pillScannedSymbol">'1'</span>
+          </div>
+          <div class="metric-pill pill-motion">
+            <span>Next Motion:</span>
+            <span class="pill-val" id="pillNextMotion">RIGHT (R) →</span>
+          </div>
+          <div class="metric-pill pill-progress">
+            <span>Step Progress:</span>
+            <span class="pill-val" id="pillStepProgress">0 / 10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal Tape Stage with Floating Read Head -->
+      <div class="tape-stage-outer">
+        <div class="tape-track" id="tapeTrack">
+          <!-- Floating Head badge translated dynamically via CSS -->
+          <div class="tape-head-floating" id="tapeHeadFloating">
+            HEAD [q0] R ▶
+          </div>
+          <!-- Cells injected by JS: ⊢ (START), [0], [1], ..., ⊣ (HALT) -->
+        </div>
+      </div>
+
+      <!-- Simulation Playback Controls Deck & Acceptance Verdict -->
+      <div class="controls-and-verdict-row">
+        <!-- Play / Step Controls -->
+        <div class="sim-controls-buttons">
+          <button id="btnPlay" class="btn-ctrl btn-play" title="Play / Pause (Space)">
+            ▶ Play
+          </button>
+          <button id="btnStepBack" class="btn-ctrl" title="Step Back (Left Arrow)">
+            ⏮ Prev
+          </button>
+          <button id="btnStepForward" class="btn-ctrl" title="Step Forward (Right Arrow)">
+            Step ⏭
+          </button>
+          <button id="btnReset" class="btn-ctrl" title="Reset to start (R)">
+            ↺ Reset
+          </button>
+
+          <!-- Speed Slider -->
+          <div class="sim-speed-control">
+            <span class="sim-speed-label">Speed:</span>
+            <input type="range" id="speedSlider" class="sim-speed-slider" min="0.5" max="3" step="0.25" value="1">
+            <span class="sim-speed-val" id="speedValLabel">1x</span>
+          </div>
+        </div>
+
+        <!-- Verdict Banner -->
+        <div class="verdict-banner-container">
+          <div class="verdict-badge status-ready" id="verdictBadge">
+            READY
+          </div>
+          <div class="verdict-explanation-text" id="verdictExplanation">
+            Click Play or Step to begin bidirectional simulation.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         DYNAMIC STATE TRANSITION DIAGRAM & DYNAMIC TRANSITION TABLE
+         =================================================================== -->
+    <div class="diagram-and-table-grid" id="diagramAndTableGrid">
+      <!-- Dynamic State Transition Diagram (SVG) -->
+      <section class="visual-panel-card">
+        <div class="panel-card-header">
+          <div class="panel-card-title-group">
+            <span style="color: #34d399;">◎</span>
+            <h3 class="panel-card-title">Dynamic State Transition Diagram</h3>
+          </div>
+          <span class="panel-card-badge">Live Active Pulse</span>
+        </div>
+
+        <div class="diagram-canvas-container">
+          <svg id="automata-svg" viewBox="0 0 880 430" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </section>
+
+      <!-- Dynamic State Transition Table -->
+      <section class="visual-panel-card">
+        <div class="panel-card-header">
+          <div class="panel-card-title-group">
+            <span style="color: #38bdf8;">⊞</span>
+            <h3 class="panel-card-title">Dynamic State Transition Matrix δ(q, σ)</h3>
+          </div>
+          <span class="panel-card-badge">Spotlight Highlight</span>
+        </div>
+
+        <div class="transition-table-container">
+          <table class="transition-table">
+            <thead id="transitionTableHead">
+              <!-- Dynamically populated -->
+            </thead>
+            <tbody id="transitionTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===================================================================
+         STEP-BY-STEP EXECUTION TRACE LOG (COLLAPSIBLE / INTERACTIVE)
+         =================================================================== -->
+    <section class="trace-log-card">
+      <div class="panel-card-header">
+        <div class="panel-card-title-group">
+          <span style="color: #a78bfa;">⏱</span>
+          <h3 class="panel-card-title">Complete Execution Trace Log</h3>
+        </div>
+        <span class="panel-card-badge">Click row to jump to step</span>
+      </div>
+
+      <div class="trace-log-table-wrapper">
+        <table class="trace-table">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Current State (q)</th>
+              <th>Head Position</th>
+              <th>Scanned Symbol</th>
+              <th>Next Action</th>
+              <th>Status</th>
+              <th>Transition Annotation</th>
+            </tr>
+          </thead>
+          <tbody id="traceTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         THEORY & MATHEMATICAL FOUNDATIONS (Ledgerly / Academic editorial style)
+         Inspired by screenshots 2 & 3: Stats triad, editorial typography
+         =================================================================== -->
+    <section class="theory-editorial-section" id="theorySection">
+      <div class="editorial-header-center">
+        <div class="editorial-pill-tag">✦ FORMAL LANGUAGE & AUTOMATA THEORY ✦</div>
+        <h2 class="editorial-title">
+          Why Two-Way Finite Automata matter in computation.
+        </h2>
+        <p class="editorial-subtitle">
+          Unlike standard one-way DFAs that consume input sequentially and can never re-read past symbols, a 2WFA can
+          sweep back and forth across a read-only tape with delimiters ⊢ and ⊣.
+        </p>
+      </div>
+
+      <!-- Stats Triad (Screenshot 2 exact style: 4,000+ / 3.5x / $12B) -->
+      <div class="theory-stats-grid">
+        <div class="stat-card-ledger">
+          <div class="stat-big-number">2<span class="accent-star">★</span></div>
+          <div class="stat-label-main">Directions of Motion</div>
+          <div class="stat-label-sub">Head moves Left (L), Right (R), or Stays (S) on the read-only tape.</div>
+        </div>
+
+        <div class="stat-card-ledger">
+          <div class="stat-big-number">REG<span class="accent-star">✓</span></div>
+          <div class="stat-label-main">Shepherdson's Theorem</div>
+          <div class="stat-label-sub">2DFA recognizes exactly the class of Regular Languages (2DFA ≡ 1DFA).</div>
+        </div>
+
+        <div class="stat-card-ledger">
+          <div class="stat-big-number">2<span style="font-size: 2.2rem; vertical-align: super;">n</span></div>
+          <div class="stat-label-main">State Economy</div>
+          <div class="stat-label-sub">2WFA can describe languages exponentially more concisely than 1WFA.</div>
+        </div>
+      </div>
+
+      <!-- Two Editorial Cards (Screenshot 3 style: "Every account, one ledger") -->
+      <div class="theory-cards-grid">
+        <div class="theory-card-item">
+          <span class="theory-card-pill">Formal Definition</span>
+          <h3 class="theory-card-title">Mathematical 6-Tuple Definition</h3>
+          <p class="theory-card-desc">
+            A Two-Way Deterministic Finite Automaton (2DFA) is formalized as:
+          </p>
+          <div class="math-formula-box">
+            M = (Q, Σ, ⊢, ⊣, δ, q₀, F)<br><br>
+            • Q : Finite non-empty set of internal states<br>
+            • Σ : Input alphabet (not containing ⊢ or ⊣)<br>
+            • ⊢, ⊣ : Left and right endmarkers defining the tape bounds<br>
+            • δ : Q × (Σ ∪ {⊢, ⊣}) → Q × {L, R, S}<br>
+            • q₀ ∈ Q : Initial starting state<br>
+            • F ⊆ Q : Set of designated accepting states
+          </div>
+        </div>
+
+        <div class="theory-card-item">
+          <span class="theory-card-pill">Decidability & Loop Guard</span>
+          <h3 class="theory-card-title">Loop Detection via Pigeonhole Principle</h3>
+          <p class="theory-card-desc">
+            Because a 2WFA can move left, it is capable of entering infinite loops without terminating. Our engine
+            prevents this using configuration hashing:
+          </p>
+          <div class="math-formula-box">
+            Total Configurations = |Q| × (n + 2)<br><br>
+            • If the automaton ever visits the exact same state q and tape position pos twice, it must cycle
+            indefinitely.<br>
+            • By the Pigeonhole Principle, any run exceeding |Q| × (n + 2) steps without halting has entered a loop and
+            is guaranteed to be REJECTED.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       SITE FOOTER (Screenshot 4 style)
+       ===================================================================== -->
+  <footer class="site-footer">
+    <div class="footer-top-cta">
+      <div class="footer-cta-icon">✦</div>
+      <h3 class="footer-cta-heading">Master Two-Way Automata</h3>
+      <p style="color: #94a3b8; font-size: 0.95rem;">
+        An interactive laboratory developed for Formal Language and Automata Theory (FLA).
+      </p>
+    </div>
+
+    <div class="footer-nav-grid">
+      <div>
+        <div class="brand-container" style="margin-bottom: 12px;">
+          <div class="brand-icon">⇄</div>
+          <div class="brand-name">2WFA.io</div>
+        </div>
+        <p class="footer-brand-bio">
+          Rigorous computer science educational simulator depicting bidirectional tape heads, crossing sequences, and
+          dynamic automata transitions.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Presets</h4>
+        <ul class="footer-links-list">
+          <li><a href="#searchControlDeck"
+              onclick="document.getElementById('presetSelect').value='pattern101'; document.getElementById('presetSelect').dispatchEvent(new Event('change'));">Pattern
+              '101'</a></li>
+          <li><a href="#searchControlDeck"
+              onclick="document.getElementById('presetSelect').value='sameEnds'; document.getElementById('presetSelect').dispatchEvent(new Event('change'));">Boundary
+              Matcher</a></li>
+          <li><a href="#searchControlDeck"
+              onclick="document.getElementById('presetSelect').value='palindromeSweep'; document.getElementById('presetSelect').dispatchEvent(new Event('change'));">Palindrome
+              Sweeper</a></li>
+          <li><a href="#searchControlDeck"
+              onclick="document.getElementById('presetSelect').value='pingPong'; document.getElementById('presetSelect').dispatchEvent(new Event('change'));">Two-Way
+              Ping-Pong</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Theory</h4>
+        <ul class="footer-links-list">
+          <li><a href="#theorySection">Shepherdson's Theorem</a></li>
+          <li><a href="#theorySection">Crossing Sequences</a></li>
+          <li><a href="#theorySection">Infinite Loop Guard</a></li>
+          <li><a href="#theorySection">6-Tuple Formalism</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Academic</h4>
+        <ul class="footer-links-list">
+          <li><a href="#">Sem-5 FLA Curriculum</a></li>
+          <li><a href="#">Department of CSE</a></li>
+          <li><a href="#">SRM Institute of Science & Technology</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom-bar">
+      <div>© 2026 2WFA.io — Two-Way Finite Automata Simulator. Academic Reference.</div>
+      <div>Crafted for Sem-5 FLA Academic Project</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="automata.js"></script>
+  <script src="visualizer.js"></script>
+</body>
+
+</html>
